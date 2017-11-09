@@ -55,6 +55,9 @@
 
 #include "net/uipopt.h"
 
+uint32_t battery;
+uint32_t flag;
+
 /**
  * Representation of an IP address.
  *
@@ -75,7 +78,7 @@ typedef uip_ip6addr_t uip_ipaddr_t;
 typedef uip_ip4addr_t uip_ipaddr_t;
 #endif /* UIP_CONF_IPV6 */
 
-uint32_t global_reader; //
+
 /*---------------------------------------------------------------------------*/
 
 /** \brief 16 bit 802.15.4 address */

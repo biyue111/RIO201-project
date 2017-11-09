@@ -34,9 +34,9 @@
 #include "net/uip-ds6.h"
 #include "net/uip-udp-packet.h"
 #include "sys/ctimer.h"
-#include "APDS.h"
+//#define WITH_COMPOWER 1
 #ifdef WITH_COMPOWER
-#include "powertrace.h"
+#include "../apps/powertrace/powertrace.h"
 #endif
 #include <stdio.h>
 #include <string.h>
@@ -61,42 +61,63 @@
 static struct uip_udp_conn *client_conn;
 static uip_ipaddr_t server_ipaddr;
 
-extern uint32_t global_reader;
+extern uint32_t battery=100;
+extern uint32_t flag=1;
+
+
 /*---------------------------------------------------------------------------*/
 PROCESS(udp_client_process, "UDP client process");
 AUTOSTART_PROCESSES(&udp_client_process);
 /*---------------------------------------------------------------------------*/
+
+ 
+
 static void
 tcpip_handler(void)
 {
   char *str;
+  printf("HANDLER START");
+
+/*if (battery<=0) {
+printf("Energy = 0");
+} else{*/
 
   if(uip_newdata()) {
     str = uip_appdata;
     str[uip_datalen()] = '\0';
+    battery--; 
+    if (battery==0) {
+printf("Energy = 0");
+flag=0;
+}
     printf("DATA recv '%s'\n", str);
   }
 }
+//}
 /*---------------------------------------------------------------------------*/
 static void
 send_packet(void *ptr)
 {
   static int seq_id;
   char buf[MAX_PAYLOAD_LEN];
+
   
-  printf("Before Data, Aggregated data = %d\n", global_reader);
   seq_id++;
-  //uint32_t value = get_apds_value();
-  PRINTF("DATA send to %d 'Hello %d'\n",
-        server_ipaddr.u8[sizeof(server_ipaddr.u8) - 1], seq_id);
-
-  if(global_reader != 0)
-    sprintf(buf, "%d%d", seq_id, global_reader);
-  else
-    sprintf(buf, "%d", seq_id);
-
+  
+  
+if (battery==0) {
+printf("Energy = 0");
+flag=0;
+}
+if (flag==1)
+ {battery--;
+ 
+  PRINTF("DATA send to %d 'Hello %d', Battery %d\n",
+         server_ipaddr.u8[sizeof(server_ipaddr.u8) - 1], seq_id,battery);
+  sprintf(buf, "Hello %d from the client", seq_id);
   uip_udp_packet_sendto(client_conn, buf, strlen(buf),
                         &server_ipaddr, UIP_HTONS(UDP_SERVER_PORT));
+}
 }
 /*---------------------------------------------------------------------------*/
 static void
@@ -186,10 +207,11 @@ PROCESS_THREAD(udp_client_process, ev, data)
 #if WITH_COMPOWER
   powertrace_sniff(POWERTRACE_ON);
 #endif
-  apds_init();
+
   etimer_set(&periodic, SEND_INTERVAL);
   while(1) {
     PROCESS_YIELD();
+     
     if(ev == tcpip_event) {
       tcpip_handler();
     }

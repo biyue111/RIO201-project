@@ -78,6 +78,10 @@
 
 #include <string.h>
 
+extern uint32_t battery;
+extern uint32_t flag;
+
+
 #if UIP_CONF_IPV6
 /*---------------------------------------------------------------------------*/
 /* For Debug, logging, statistics                                            */
@@ -101,7 +105,7 @@ void uip_log(char *msg);
 #if UIP_STATISTICS == 1
 struct uip_stats uip_stat;
 #endif /* UIP_STATISTICS == 1 */
-extern uint32_t global_reader;
+ 
 
 /*---------------------------------------------------------------------------*/
 /** @{ \name Layer 2 variables */
@@ -1181,15 +1185,18 @@ uip_process(uint8_t flag)
 #endif /* UIP_CONF_IPV6_RPL */
 
       UIP_IP_BUF->ttl = UIP_IP_BUF->ttl - 1;
+     
+      if (battery==0) {
+ 	printf("Energy = 0");
+	flag=0;
+        goto drop;
+      }  else {  
+      battery--;  
       PRINTF("Forwarding packet to ");
       PRINT6ADDR(&UIP_IP_BUF->destipaddr);
       PRINTF("\n");
       UIP_STAT(++uip_stat.ip.forwarded);
-    //  goto send;
-      remove_ext_hdr();
-      char *data_pack = &uip_buf[UIP_IPUDPH_LEN + UIP_LLH_LEN];
-      global_reader = atoi(data_pack);
-      goto drop;
+      goto send;}
     } else {
       if((uip_is_addr_link_local(&UIP_IP_BUF->srcipaddr)) &&
          (!uip_is_addr_unspecified(&UIP_IP_BUF->srcipaddr)) &&
