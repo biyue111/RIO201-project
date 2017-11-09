@@ -1190,8 +1190,12 @@ uip_process(uint8_t flag)
  	printf("Energy = 0");
 	flag=0;
         goto drop;
-      }  else {  
-      battery--;  
+      } 
+      else if (flag == 0) {
+        goto drop; // if no energy, doesn't forward
+      }
+      else {  
+      battery--;  // battery reduce one when forwarding a packet
       PRINTF("Forwarding packet to ");
       PRINT6ADDR(&UIP_IP_BUF->destipaddr);
       PRINTF("\n");

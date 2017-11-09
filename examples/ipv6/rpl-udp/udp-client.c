@@ -61,7 +61,7 @@
 static struct uip_udp_conn *client_conn;
 static uip_ipaddr_t server_ipaddr;
 
-extern uint32_t battery=100;
+extern uint32_t battery=10000;
 extern uint32_t flag=1;
 
 
@@ -87,10 +87,10 @@ printf("Energy = 0");
     str[uip_datalen()] = '\0';
     battery--; 
     if (battery==0) {
-printf("Energy = 0");
-flag=0;
-}
-    printf("DATA recv '%s'\n", str);
+    printf("Energy = 0");
+    flag=0;
+    }
+    //printf("DATA recv '%s'\n", str);
   }
 }
 //}
@@ -112,8 +112,8 @@ flag=0;
 if (flag==1)
  {battery--;
  
-  PRINTF("DATA send to %d 'Hello %d', Battery %d\n",
-         server_ipaddr.u8[sizeof(server_ipaddr.u8) - 1], seq_id,battery);
+  //PRINTF("DATA send to %d 'Hello %d', Battery %d\n",
+  //      server_ipaddr.u8[sizeof(server_ipaddr.u8) - 1], seq_id,battery);
   sprintf(buf, "Hello %d from the client", seq_id);
   uip_udp_packet_sendto(client_conn, buf, strlen(buf),
                         &server_ipaddr, UIP_HTONS(UDP_SERVER_PORT));
