@@ -55,8 +55,11 @@
 
 #include "net/uipopt.h"
 
-uint32_t battery;
-uint32_t flag;
+//uint32_t battery;
+//uint32_t flag;
+#define MAX_PAYLOAD_LEN		30
+char global_reader[MAX_PAYLOAD_LEN];
+uint32_t receive_agregation_flag;
 
 /**
  * Representation of an IP address.

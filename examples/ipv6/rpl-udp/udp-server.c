@@ -33,6 +33,9 @@
 #include "net/uip.h"
 #include "net/rpl/rpl.h"
 
+#include "leds.h"
+//#include "APDS.h"
+
 #include "net/netstack.h"
 #include "dev/button-sensor.h"
 #include <stdio.h>
@@ -63,10 +66,28 @@ tcpip_handler(void)
   if(uip_newdata()) {
     appdata = (char *)uip_appdata;
     appdata[uip_datalen()] = 0;
-    //PRINTF("DATA recv '%s' from ", appdata);
-    //PRINTF("%d",
-    //       UIP_IP_BUF->srcipaddr.u8[sizeof(UIP_IP_BUF->srcipaddr.u8) - 1]);
-    //PRINTF("\n");
+    int value = atoi(appdata); 
+    PRINTF("DATA recv: 'r%d %s'", UIP_IP_BUF->srcipaddr.u8[sizeof(UIP_IP_BUF->srcipaddr.u8) - 1], appdata);
+    PRINTF("\n");
+    
+    switch (value){
+    	case 0 : 
+		leds_on(LEDS_RED); 
+		leds_off(LEDS_BLUE);
+		leds_off(LEDS_GREEN); 
+		break;  
+	case 1 : 
+		leds_on(LEDS_GREEN);
+		leds_off(LEDS_RED); 
+		leds_off(LEDS_BLUE); 
+		break;  
+	case 2 :
+		leds_on(LEDS_BLUE);
+		leds_off(LEDS_RED);
+		leds_off(LEDS_GREEN);  
+		break; 
+    } 
+    
 #if SERVER_REPLY
     PRINTF("DATA sending reply\n");
     uip_ipaddr_copy(&server_conn->ripaddr, &UIP_IP_BUF->srcipaddr);
@@ -106,9 +127,9 @@ PROCESS_THREAD(udp_server_process, ev, data)
   PROCESS_PAUSE();
 
   SENSORS_ACTIVATE(button_sensor);
-
+	
   PRINTF("UDP server started\n");
-
+ 
 #if UIP_CONF_ROUTER
 /* The choice of server address determines its 6LoPAN header compression.
  * Obviously the choice made here must also be selected in udp-client.c.

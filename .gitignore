@@ -12,7 +12,8 @@ examples/*
 examples/ipv6/*
 !examples/ipv6/rpl-udp
 examples/ipv6/rpl-udp/*
-!examples/ipv6/rpl-udp/udp-client.c
-!examples/ipv6/rpl-udp/udp-server.c
+!examples/ipv6/rpl-udp/*.c
+!examples/ipv6/rpl-udp/Makefile
+examples/ipv6/rpl-udp/symbols.c
 
 !.gitignore

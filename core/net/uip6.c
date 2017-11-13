@@ -78,9 +78,8 @@
 
 #include <string.h>
 
-extern uint32_t battery;
-extern uint32_t flag;
-
+extern char global_reader[MAX_PAYLOAD_LEN];
+extern uint32_t receive_agregation_flag;
 
 #if UIP_CONF_IPV6
 /*---------------------------------------------------------------------------*/
@@ -1185,22 +1184,21 @@ uip_process(uint8_t flag)
 #endif /* UIP_CONF_IPV6_RPL */
 
       UIP_IP_BUF->ttl = UIP_IP_BUF->ttl - 1;
-     
-      if (battery==0) {
- 	printf("Energy = 0");
-	flag=0;
-        goto drop;
-      } 
-      else if (flag == 0) {
-        goto drop; // if no energy, doesn't forward
-      }
-      else {  
-      battery--;  // battery reduce one when forwarding a packet
+      
       PRINTF("Forwarding packet to ");
       PRINT6ADDR(&UIP_IP_BUF->destipaddr);
       PRINTF("\n");
       UIP_STAT(++uip_stat.ip.forwarded);
-      goto send;}
+      //goto send;
+      remove_ext_hdr();
+      char *data_pack = &uip_buf[UIP_IPUDPH_LEN + UIP_LLH_LEN]; 
+            
+
+   data_pack[(int)((strlen(data_pack))/2)]='\0';
+   
+   sprintf(global_reader,"r%d %s",UIP_IP_BUF->srcipaddr.u8[sizeof(UIP_IP_BUF->srcipaddr.u8) - 1], data_pack);
+      goto drop;
+
     } else {
       if((uip_is_addr_link_local(&UIP_IP_BUF->srcipaddr)) &&
          (!uip_is_addr_unspecified(&UIP_IP_BUF->srcipaddr)) &&

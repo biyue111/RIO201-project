@@ -50,7 +50,7 @@
 #include "net/uip-debug.h"
 
 #ifndef PERIOD
-#define PERIOD 1
+#define PERIOD 3
 #endif
 
 #define START_INTERVAL		(15 * CLOCK_SECOND)
@@ -61,9 +61,8 @@
 static struct uip_udp_conn *client_conn;
 static uip_ipaddr_t server_ipaddr;
 
-extern uint32_t battery=10000;
-extern uint32_t flag=1;
-
+extern char global_reader[MAX_PAYLOAD_LEN];
+extern uint32_t receive_agregation_flag;
 
 /*---------------------------------------------------------------------------*/
 PROCESS(udp_client_process, "UDP client process");
@@ -85,12 +84,12 @@ printf("Energy = 0");
   if(uip_newdata()) {
     str = uip_appdata;
     str[uip_datalen()] = '\0';
-    battery--; 
+    /*battery--; 
     if (battery==0) {
-    printf("Energy = 0");
-    flag=0;
-    }
-    //printf("DATA recv '%s'\n", str);
+printf("Energy = 0");
+flag=0;
+}*/
+    printf("DATA recv '%s'\n", str);
   }
 }
 //}
@@ -101,23 +100,21 @@ send_packet(void *ptr)
   static int seq_id;
   char buf[MAX_PAYLOAD_LEN];
 
-  
-  seq_id++;
-  
-  
-if (battery==0) {
-printf("Energy = 0");
-flag=0;
-}
-if (flag==1)
- {battery--;
  
-  //PRINTF("DATA send to %d 'Hello %d', Battery %d\n",
-  //      server_ipaddr.u8[sizeof(server_ipaddr.u8) - 1], seq_id,battery);
-  sprintf(buf, "Hello %d from the client", seq_id);
+  printf("Before Data, Aggregated data = %s\n",global_reader);
+    seq_id++;
+
+PRINTF("DATA send to %d 'Hello %d'",
+         server_ipaddr.u8[sizeof(server_ipaddr.u8) - 1], seq_id);
+ 
+if (global_reader[0]!= NULL)
+    sprintf(buf,"%d %s",seq_id,global_reader);
+//sprintf(buf,"%d",seq_id);
+else
+     sprintf(buf,"%d ...",seq_id);
+  //sprintf(buf, "Hello %d from the client", seq_id);
   uip_udp_packet_sendto(client_conn, buf, strlen(buf),
                         &server_ipaddr, UIP_HTONS(UDP_SERVER_PORT));
-}
 }
 /*---------------------------------------------------------------------------*/
 static void
