@@ -1191,12 +1191,10 @@ uip_process(uint8_t flag)
       UIP_STAT(++uip_stat.ip.forwarded);
       //goto send;
       remove_ext_hdr();
-      char *data_pack = &uip_buf[UIP_IPUDPH_LEN + UIP_LLH_LEN]; 
-            
-
-   data_pack[(int)((strlen(data_pack))/2)]='\0';
-   
-   sprintf(global_reader,"r%d %s",UIP_IP_BUF->srcipaddr.u8[sizeof(UIP_IP_BUF->srcipaddr.u8) - 1], data_pack);
+      char *data_pack = &uip_buf[UIP_IPUDPH_LEN + UIP_LLH_LEN];
+      data_pack[(int)((strlen(data_pack))/2)]='\0';
+      sprintf(global_reader,"r%d %s",UIP_IP_BUF->srcipaddr.u8[sizeof(UIP_IP_BUF->srcipaddr.u8) - 1], data_pack);
+      receive_agregation_flag = 1; // set flag=1 to show the packet from the previous node has been received
       goto drop;
 
     } else {

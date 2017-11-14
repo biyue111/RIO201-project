@@ -52,9 +52,13 @@
 #ifndef PERIOD
 #define PERIOD 3
 #endif
+#ifndef CHECK_PERIOD
+#define CHECK_PERIOD 0.1
+#endif
 
 #define START_INTERVAL		(15 * CLOCK_SECOND)
 #define SEND_INTERVAL		(PERIOD * CLOCK_SECOND)
+#define CHECK_INTERVAL		(CHECK_PERIOD * CLOCK_SECOND)
 #define SEND_TIME		(random_rand() % (SEND_INTERVAL))
 #define MAX_PAYLOAD_LEN		30
 
@@ -76,19 +80,9 @@ tcpip_handler(void)
 {
   char *str;
   printf("HANDLER START");
-
-/*if (battery<=0) {
-printf("Energy = 0");
-} else{*/
-
   if(uip_newdata()) {
     str = uip_appdata;
     str[uip_datalen()] = '\0';
-    /*battery--; 
-    if (battery==0) {
-printf("Energy = 0");
-flag=0;
-}*/
     printf("DATA recv '%s'\n", str);
   }
 }
@@ -100,19 +94,17 @@ send_packet(void *ptr)
   static int seq_id;
   char buf[MAX_PAYLOAD_LEN];
 
- 
   printf("Before Data, Aggregated data = %s\n",global_reader);
-    seq_id++;
+  seq_id++;
 
-PRINTF("DATA send to %d 'Hello %d'",
+  PRINTF("DATA send to %d 'Hello %d'",
          server_ipaddr.u8[sizeof(server_ipaddr.u8) - 1], seq_id);
  
-if (global_reader[0]!= NULL)
+  if (global_reader[0]!= NULL)
     sprintf(buf,"%d %s",seq_id,global_reader);
-//sprintf(buf,"%d",seq_id);
-else
-     sprintf(buf,"%d ...",seq_id);
-  //sprintf(buf, "Hello %d from the client", seq_id);
+  else
+    sprintf(buf,"%d ...",seq_id);
+
   uip_udp_packet_sendto(client_conn, buf, strlen(buf),
                         &server_ipaddr, UIP_HTONS(UDP_SERVER_PORT));
 }
@@ -173,7 +165,10 @@ set_global_address(void)
 PROCESS_THREAD(udp_client_process, ev, data)
 {
   static struct etimer periodic;
+  static struct etimer packet_check_timer;
   static struct ctimer backoff_timer;
+  
+  static uint32_t timer_flag;
 #if WITH_COMPOWER
   static int print = 0;
 #endif
@@ -206,17 +201,36 @@ PROCESS_THREAD(udp_client_process, ev, data)
 #endif
 
   etimer_set(&periodic, SEND_INTERVAL);
+  etimer_set(&packet_check_timer, CHECK_INTERVAL);
+  etimer_stop(&packet_check_timer);
+  receive_agregation_flag = 0;
+  //timer_flag = 0;
   while(1) {
     PROCESS_YIELD();
      
     if(ev == tcpip_event) {
       tcpip_handler();
     }
-    
-    if(etimer_expired(&periodic)) {
-      etimer_reset(&periodic);
-      ctimer_set(&backoff_timer, SEND_TIME, send_packet, NULL);
 
+    if(etimer_expired(&packet_check_timer)){
+      //printf("checking, receive_agregation_flag=%d\n",receive_agregation_flag);
+      if(receive_agregation_flag){
+        etimer_reset(&periodic);
+        etimer_reset(&packet_check_timer);
+        etimer_stop(&packet_check_timer);
+        ctimer_set(&backoff_timer, SEND_TIME, send_packet, NULL);
+        receive_agregation_flag = 0;
+      } else {
+        etimer_reset(&packet_check_timer);
+      }
+      continue;
+    }
+
+    if(etimer_expired(&periodic)) {
+      printf("Begin to wait packet...\n");
+      etimer_reset(&periodic);
+      etimer_stop(&periodic);
+      etimer_reset(&packet_check_timer);
 #if WITH_COMPOWER
       if (print == 0) {
 	powertrace_print("#P");
@@ -225,10 +239,10 @@ PROCESS_THREAD(udp_client_process, ev, data)
 	print = 0;
       }
 #endif
-
     }
-  }
 
+
+  }
   PROCESS_END();
 }
 /*---------------------------------------------------------------------------*/

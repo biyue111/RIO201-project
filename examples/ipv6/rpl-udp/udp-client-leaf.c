@@ -61,12 +61,7 @@
 static struct uip_udp_conn *client_conn;
 static uip_ipaddr_t server_ipaddr;
 
-//extern uint32_t battery=100;
-//extern uint32_t flag=1;
-
-//extern uint32_t global_reader=0;
 extern char global_reader[MAX_PAYLOAD_LEN];
-//extern uint32_t global_reader[20];
 
 /*---------------------------------------------------------------------------*/
 PROCESS(udp_client_process, "UDP client process");
@@ -81,18 +76,9 @@ tcpip_handler(void)
   char *str;
   printf("HANDLER START");
 
-/*if (battery<=0) {
-printf("Energy = 0");
-} else{*/
-
   if(uip_newdata()) {
     str = uip_appdata;
     str[uip_datalen()] = '\0';
-    /*battery--; 
-    if (battery==0) {
-printf("Energy = 0");
-flag=0;
-}*/
     printf("DATA recv '%s'\n", str);
   }
 }
