@@ -64,7 +64,7 @@
 
 static struct uip_udp_conn *client_conn;
 static uip_ipaddr_t server_ipaddr;
-
+extern uint32_t global_reader_length;
 extern char global_reader[MAX_PAYLOAD_LEN];
 extern uint32_t receive_agregation_flag;
 
@@ -103,10 +103,12 @@ send_packet(void *ptr)
   if (global_reader[0]!= NULL)
     sprintf(buf,"%d %s",seq_id,global_reader);
   else
-    sprintf(buf,"%d ..................................",seq_id);
+    sprintf(buf,"%d ....................................................................",seq_id);
 
   uip_udp_packet_sendto(client_conn, buf, strlen(buf),
                         &server_ipaddr, UIP_HTONS(UDP_SERVER_PORT));
+
+  global_reader_length = 0; // reset global_reader
 }
 /*---------------------------------------------------------------------------*/
 static void
@@ -168,7 +170,7 @@ PROCESS_THREAD(udp_client_process, ev, data)
   static struct etimer packet_check_timer;
   static struct ctimer backoff_timer;
   
-  static uint32_t timer_flag;
+  //static uint32_t timer_flag;
 #if WITH_COMPOWER
   static int print = 0;
 #endif
@@ -203,6 +205,7 @@ PROCESS_THREAD(udp_client_process, ev, data)
   etimer_set(&periodic, SEND_INTERVAL);
   etimer_set(&packet_check_timer, CHECK_INTERVAL);
   etimer_stop(&packet_check_timer);
+  global_reader_length = 0;
   receive_agregation_flag = 0;
   //timer_flag = 0;
   while(1) {
@@ -218,8 +221,8 @@ PROCESS_THREAD(udp_client_process, ev, data)
         etimer_reset(&periodic);
         etimer_reset(&packet_check_timer);
         etimer_stop(&packet_check_timer);
-        //ctimer_set(&backoff_timer, SEND_TIME, send_packet, NULL);
-        send_packet(NULL); // no backoff for branch nodes
+        ctimer_set(&backoff_timer, SEND_TIME, send_packet, NULL);
+        //send_packet(NULL); // no backoff for branch nodes
         receive_agregation_flag = 0;
       } else {
         etimer_reset(&packet_check_timer);

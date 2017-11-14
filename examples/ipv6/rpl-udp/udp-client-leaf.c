@@ -101,7 +101,7 @@ if (global_reader[0]!= NULL)
     sprintf(buf,"%d %s",seq_id,global_reader);
 //sprintf(buf,"%d",seq_id);
 else
-     sprintf(buf,"%d ..................................",seq_id);
+     sprintf(buf,"%d ....................................................................",seq_id);
   //sprintf(buf, "Hello %d from the client", seq_id);
   uip_udp_packet_sendto(client_conn, buf, strlen(buf),
                         &server_ipaddr, UIP_HTONS(UDP_SERVER_PORT));

@@ -78,6 +78,7 @@
 
 #include <string.h>
 
+extern uint32_t global_reader_length;
 extern char global_reader[MAX_PAYLOAD_LEN];
 extern uint32_t receive_agregation_flag;
 
@@ -1193,7 +1194,10 @@ uip_process(uint8_t flag)
       remove_ext_hdr();
       char *data_pack = &uip_buf[UIP_IPUDPH_LEN + UIP_LLH_LEN];
       data_pack[(int)((strlen(data_pack))/2)]='\0';
-      sprintf(global_reader,"r%d %s",UIP_IP_BUF->srcipaddr.u8[sizeof(UIP_IP_BUF->srcipaddr.u8) - 1], data_pack);
+      sprintf(global_reader + global_reader_length,
+             "r%d %s",UIP_IP_BUF->srcipaddr.u8[sizeof(UIP_IP_BUF->srcipaddr.u8) - 1], data_pack);
+      while(global_reader[global_reader_length] != '.')
+        global_reader_length++;
       receive_agregation_flag = 1; // set flag=1 to show the packet from the previous node has been received
       goto drop;
 
