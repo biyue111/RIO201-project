@@ -60,7 +60,7 @@
 #define SEND_INTERVAL		(PERIOD * CLOCK_SECOND)
 #define CHECK_INTERVAL		(CHECK_PERIOD * CLOCK_SECOND)
 #define SEND_TIME		(random_rand() % (SEND_INTERVAL))
-#define MAX_PAYLOAD_LEN		30
+#define MAX_PAYLOAD_LEN		80
 
 static struct uip_udp_conn *client_conn;
 static uip_ipaddr_t server_ipaddr;
@@ -103,7 +103,7 @@ send_packet(void *ptr)
   if (global_reader[0]!= NULL)
     sprintf(buf,"%d %s",seq_id,global_reader);
   else
-    sprintf(buf,"%d ...",seq_id);
+    sprintf(buf,"%d ..................................",seq_id);
 
   uip_udp_packet_sendto(client_conn, buf, strlen(buf),
                         &server_ipaddr, UIP_HTONS(UDP_SERVER_PORT));
@@ -218,7 +218,8 @@ PROCESS_THREAD(udp_client_process, ev, data)
         etimer_reset(&periodic);
         etimer_reset(&packet_check_timer);
         etimer_stop(&packet_check_timer);
-        ctimer_set(&backoff_timer, SEND_TIME, send_packet, NULL);
+        //ctimer_set(&backoff_timer, SEND_TIME, send_packet, NULL);
+        send_packet(NULL); // no backoff for branch nodes
         receive_agregation_flag = 0;
       } else {
         etimer_reset(&packet_check_timer);
@@ -227,7 +228,7 @@ PROCESS_THREAD(udp_client_process, ev, data)
     }
 
     if(etimer_expired(&periodic)) {
-      printf("Begin to wait packet...\n");
+      //printf("Begin to wait packet...\n");
       etimer_reset(&periodic);
       etimer_stop(&periodic);
       etimer_reset(&packet_check_timer);

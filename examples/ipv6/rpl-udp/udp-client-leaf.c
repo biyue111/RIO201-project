@@ -56,7 +56,7 @@
 #define START_INTERVAL		(15 * CLOCK_SECOND)
 #define SEND_INTERVAL		(PERIOD * CLOCK_SECOND)
 #define SEND_TIME		(random_rand() % (SEND_INTERVAL))
-#define MAX_PAYLOAD_LEN		30
+#define MAX_PAYLOAD_LEN		80
 
 static struct uip_udp_conn *client_conn;
 static uip_ipaddr_t server_ipaddr;
@@ -101,7 +101,7 @@ if (global_reader[0]!= NULL)
     sprintf(buf,"%d %s",seq_id,global_reader);
 //sprintf(buf,"%d",seq_id);
 else
-     sprintf(buf,"%d ...",seq_id);
+     sprintf(buf,"%d ..................................",seq_id);
   //sprintf(buf, "Hello %d from the client", seq_id);
   uip_udp_packet_sendto(client_conn, buf, strlen(buf),
                         &server_ipaddr, UIP_HTONS(UDP_SERVER_PORT));

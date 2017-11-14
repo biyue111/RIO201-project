@@ -57,7 +57,7 @@
 
 //uint32_t battery;
 //uint32_t flag;
-#define MAX_PAYLOAD_LEN		30
+#define MAX_PAYLOAD_LEN		80
 char global_reader[MAX_PAYLOAD_LEN];
 uint32_t receive_agregation_flag;
 
