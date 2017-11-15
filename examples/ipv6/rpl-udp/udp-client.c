@@ -75,11 +75,9 @@ tcpip_handler(void)
   char *str;
   printf("HANDLER START");
 
-
   if(uip_newdata()) {
     str = uip_appdata;
     str[uip_datalen()] = '\0';
-1
     printf("DATA recv '%s'\n", str);
   }
 }
