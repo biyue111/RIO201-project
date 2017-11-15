@@ -34,9 +34,9 @@
 #include "net/uip-ds6.h"
 #include "net/uip-udp-packet.h"
 #include "sys/ctimer.h"
-#include "APDS.h"
+//#define WITH_COMPOWER 1
 #ifdef WITH_COMPOWER
-#include "powertrace.h"
+#include "../apps/powertrace/powertrace.h"
 #endif
 #include <stdio.h>
 #include <string.h>
@@ -56,47 +56,50 @@
 #define START_INTERVAL		(15 * CLOCK_SECOND)
 #define SEND_INTERVAL		(PERIOD * CLOCK_SECOND)
 #define SEND_TIME		(random_rand() % (SEND_INTERVAL))
-#define MAX_PAYLOAD_LEN		30
+#define MAX_PAYLOAD_LEN		301
 
 static struct uip_udp_conn *client_conn;
 static uip_ipaddr_t server_ipaddr;
 
-extern uint32_t global_reader;
+
 /*---------------------------------------------------------------------------*/
 PROCESS(udp_client_process, "UDP client process");
 AUTOSTART_PROCESSES(&udp_client_process);
 /*---------------------------------------------------------------------------*/
+
+ 
+
 static void
 tcpip_handler(void)
 {
   char *str;
+  printf("HANDLER START");
+
 
   if(uip_newdata()) {
     str = uip_appdata;
     str[uip_datalen()] = '\0';
+1
     printf("DATA recv '%s'\n", str);
   }
 }
+//}
 /*---------------------------------------------------------------------------*/
 static void
 send_packet(void *ptr)
 {
   static int seq_id;
   char buf[MAX_PAYLOAD_LEN];
+
   
-  printf("Before Data, Aggregated data = %d\n", global_reader);
   seq_id++;
-  //uint32_t value = get_apds_value();
+  
   PRINTF("DATA send to %d 'Hello %d'\n",
-        server_ipaddr.u8[sizeof(server_ipaddr.u8) - 1], seq_id);
-
-  if(global_reader != 0)
-    sprintf(buf, "%d%d", seq_id, global_reader);
-  else
-    sprintf(buf, "%d", seq_id);
-
+         server_ipaddr.u8[sizeof(server_ipaddr.u8) - 1], seq_id);
+  sprintf(buf, "Hello %d from the client", seq_id);
   uip_udp_packet_sendto(client_conn, buf, strlen(buf),
                         &server_ipaddr, UIP_HTONS(UDP_SERVER_PORT));
+
 }
 /*---------------------------------------------------------------------------*/
 static void
@@ -160,6 +163,10 @@ PROCESS_THREAD(udp_client_process, ev, data)
   static int print = 0;
 #endif
 
+  long int tx_time;
+  long int Battery = 100000;
+  tx_time=energest_type_time(ENERGEST_TYPE_TRANSMIT);
+
   PROCESS_BEGIN();
 
   PROCESS_PAUSE();
@@ -186,10 +193,12 @@ PROCESS_THREAD(udp_client_process, ev, data)
 #if WITH_COMPOWER
   powertrace_sniff(POWERTRACE_ON);
 #endif
-  apds_init();
+
   etimer_set(&periodic, SEND_INTERVAL);
-  while(1) {
+
+  while(tx_time < Battery) {
     PROCESS_YIELD();
+     
     if(ev == tcpip_event) {
       tcpip_handler();
     }
@@ -208,8 +217,12 @@ PROCESS_THREAD(udp_client_process, ev, data)
 #endif
 
     }
-  }
+printf("TX time %ld\n", tx_time);
 
+}
+  
+  printf("No Battery Power\n");
+  exit(0);
   PROCESS_END();
 }
 /*---------------------------------------------------------------------------*/
