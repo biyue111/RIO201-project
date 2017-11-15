@@ -55,8 +55,8 @@
 
 #include "net/uipopt.h"
 
-//uint32_t battery;
-//uint32_t flag;
+uint32_t battery;
+uint32_t battery_flag;
 #define MAX_PAYLOAD_LEN		80
 uint32_t global_reader_length;
 char global_reader[MAX_PAYLOAD_LEN];

@@ -78,6 +78,8 @@
 
 #include <string.h>
 
+extern uint32_t battery;
+extern uint32_t battery_flag;
 extern uint32_t global_reader_length;
 extern char global_reader[MAX_PAYLOAD_LEN];
 extern uint32_t receive_agregation_flag;
@@ -1185,7 +1187,16 @@ uip_process(uint8_t flag)
 #endif /* UIP_CONF_IPV6_RPL */
 
       UIP_IP_BUF->ttl = UIP_IP_BUF->ttl - 1;
-      
+      if (battery==0) {
+ 	printf("Energy = 0");
+	battery_flag = 0;
+        goto drop;
+      } 
+      else if (battery_flag == 0) {
+        goto drop; // if no energy, doesn't forward
+      }
+      else {
+      battery--;  // battery reduce one when forwarding a packet
       PRINTF("Forwarding packet to ");
       PRINT6ADDR(&UIP_IP_BUF->destipaddr);
       PRINTF("\n");
@@ -1200,6 +1211,7 @@ uip_process(uint8_t flag)
         global_reader_length++;
       receive_agregation_flag = 1; // set flag=1 to show the packet from the previous node has been received
       goto drop;
+      }
 
     } else {
       if((uip_is_addr_link_local(&UIP_IP_BUF->srcipaddr)) &&

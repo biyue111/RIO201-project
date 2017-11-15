@@ -62,6 +62,8 @@ static struct uip_udp_conn *client_conn;
 static uip_ipaddr_t server_ipaddr;
 
 extern char global_reader[MAX_PAYLOAD_LEN];
+extern uint32_t battery = 10000;
+extern uint32_t battery_flag = 1;
 
 /*---------------------------------------------------------------------------*/
 PROCESS(udp_client_process, "UDP client process");
@@ -90,21 +92,29 @@ send_packet(void *ptr)
   static int seq_id;
   char buf[MAX_PAYLOAD_LEN];
 
- 
-  printf("Before Data, Aggregated data = %s\n",global_reader);
+  if (battery==0){
+    printf("Energy = 0\n");
+    battery_flag = 0;
+  }
+
+  if(battery_flag){
+    battery--;
+    printf("Before Data, Aggregated data = %s\n",global_reader);
     seq_id++;
 
-PRINTF("DATA send to %d 'Hello %d'",
-         server_ipaddr.u8[sizeof(server_ipaddr.u8) - 1], seq_id);
+    printf("Battery = %d\n", battery);
+    PRINTF("DATA send to %d 'Hello %d'",
+           server_ipaddr.u8[sizeof(server_ipaddr.u8) - 1], seq_id);
  
-if (global_reader[0]!= NULL)
-    sprintf(buf,"%d %s",seq_id,global_reader);
+  if (global_reader[0]!= NULL)
+      sprintf(buf,"%d %s",seq_id,global_reader);
 //sprintf(buf,"%d",seq_id);
-else
+  else
      sprintf(buf,"%d ....................................................................",seq_id);
   //sprintf(buf, "Hello %d from the client", seq_id);
   uip_udp_packet_sendto(client_conn, buf, strlen(buf),
                         &server_ipaddr, UIP_HTONS(UDP_SERVER_PORT));
+  }
 }
 /*---------------------------------------------------------------------------*/
 static void
