@@ -52,11 +52,11 @@
 #ifndef PERIOD
 #define PERIOD 3
 #endif
-#ifndef CHECK_PERIOD
-#define CHECK_PERIOD 0.1
-#endif
+//#ifndef CHECK_PERIOD
+//#define CHECK_PERIOD 0.1
+//#endif
 
-#define AGREGATION
+//#define AGREGATION
 #define START_INTERVAL		(15 * CLOCK_SECOND)
 #define SEND_INTERVAL		(PERIOD * CLOCK_SECOND)
 #define CHECK_INTERVAL		(CHECK_PERIOD * CLOCK_SECOND)
@@ -119,6 +119,7 @@ send_packet(void *ptr)
                         &server_ipaddr, UIP_HTONS(UDP_SERVER_PORT));
 
     global_reader_length = 0; // reset global_reader
+    global_reader[0] = NULL;
   }
 }
 /*---------------------------------------------------------------------------*/
@@ -178,7 +179,7 @@ set_global_address(void)
 PROCESS_THREAD(udp_client_process, ev, data)
 {
   static struct etimer periodic;
-  static struct etimer packet_check_timer;
+  //static struct etimer packet_check_timer;
   static struct ctimer backoff_timer;
   
   //static uint32_t timer_flag;
@@ -214,8 +215,8 @@ PROCESS_THREAD(udp_client_process, ev, data)
 #endif
 
   etimer_set(&periodic, SEND_INTERVAL);
-  etimer_set(&packet_check_timer, CHECK_INTERVAL);
-  etimer_stop(&packet_check_timer);
+  //etimer_set(&packet_check_timer, CHECK_INTERVAL);
+  //etimer_stop(&packet_check_timer);
   global_reader_length = 0;
   receive_agregation_flag = 0;
   //timer_flag = 0;
@@ -226,26 +227,18 @@ PROCESS_THREAD(udp_client_process, ev, data)
       tcpip_handler();
     }
 #ifdef AGREGATION
-    if(etimer_expired(&packet_check_timer)){
+    if(etimer_expired(&periodic)) {
       //printf("checking, receive_agregation_flag=%d\n",receive_agregation_flag);
-      if(receive_agregation_flag){
-        etimer_reset(&periodic);
-        etimer_reset(&packet_check_timer);
-        etimer_stop(&packet_check_timer);
+      etimer_reset(&periodic);
+      if(receive_agregation_flag) {
+        //etimer_reset(&packet_check_timer);
+        //etimer_stop(&packet_check_timer);
         ctimer_set(&backoff_timer, SEND_TIME, send_packet, NULL);
         //send_packet(NULL); // no backoff for branch nodes
         receive_agregation_flag = 0;
-      } else {
-        etimer_reset(&packet_check_timer);
       }
-      continue;
     }
 
-    if(etimer_expired(&periodic)) {
-      //printf("Begin to wait packet...\n");
-      etimer_reset(&periodic);
-      etimer_stop(&periodic);
-      etimer_reset(&packet_check_timer);
 #else
     if(etimer_expired(&periodic)) {
       etimer_reset(&periodic);
@@ -271,7 +264,6 @@ PROCESS_THREAD(udp_client_process, ev, data)
 	print = 0;
       }
 #endif
-    }
 
 
   }
