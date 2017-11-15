@@ -62,8 +62,8 @@ static struct uip_udp_conn *client_conn;
 static uip_ipaddr_t server_ipaddr;
 
 extern char global_reader[MAX_PAYLOAD_LEN];
-extern uint32_t battery = 10000;
-extern uint32_t battery_flag = 1;
+//extern uint32_t battery = 10000;
+//extern uint32_t battery_flag = 1;
 
 /*---------------------------------------------------------------------------*/
 PROCESS(udp_client_process, "UDP client process");
@@ -92,17 +92,10 @@ send_packet(void *ptr)
   static int seq_id;
   char buf[MAX_PAYLOAD_LEN];
 
-  if (battery==0){
-    printf("Energy = 0\n");
-    battery_flag = 0;
-  }
 
-  if(battery_flag){
-    battery--;
     printf("Before Data, Aggregated data = %s\n",global_reader);
     seq_id++;
 
-    printf("Battery = %d\n", battery);
     PRINTF("DATA send to %d 'Hello %d'",
            server_ipaddr.u8[sizeof(server_ipaddr.u8) - 1], seq_id);
  
@@ -114,7 +107,6 @@ send_packet(void *ptr)
   //sprintf(buf, "Hello %d from the client", seq_id);
   uip_udp_packet_sendto(client_conn, buf, strlen(buf),
                         &server_ipaddr, UIP_HTONS(UDP_SERVER_PORT));
-  }
 }
 /*---------------------------------------------------------------------------*/
 static void
@@ -174,6 +166,9 @@ PROCESS_THREAD(udp_client_process, ev, data)
 {
   static struct etimer periodic;
   static struct ctimer backoff_timer;
+  long int tx_time;
+  long int Battery = 100000;
+  tx_time=energest_type_time(ENERGEST_TYPE_TRANSMIT);
 #if WITH_COMPOWER
   static int print = 0;
 #endif
@@ -206,7 +201,7 @@ PROCESS_THREAD(udp_client_process, ev, data)
 #endif
 
   etimer_set(&periodic, SEND_INTERVAL);
-  while(1) {
+  while(tx_time < Battery) {
     PROCESS_YIELD();
      
     if(ev == tcpip_event) {
@@ -227,8 +222,10 @@ PROCESS_THREAD(udp_client_process, ev, data)
 #endif
 
     }
+    printf("TX time %ld\n", tx_time);
   }
-
+  printf("No Battery Power\n");
+  exit(0);
   PROCESS_END();
 }
 /*---------------------------------------------------------------------------*/

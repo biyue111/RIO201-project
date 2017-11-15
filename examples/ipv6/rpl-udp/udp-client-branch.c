@@ -68,8 +68,8 @@ static uip_ipaddr_t server_ipaddr;
 extern uint32_t global_reader_length;
 extern char global_reader[MAX_PAYLOAD_LEN];
 extern uint32_t receive_agregation_flag;
-extern uint32_t battery = 10000;
-extern uint32_t battery_flag = 1;
+//extern uint32_t battery = 10000;
+//extern uint32_t battery_flag = 1;
 
 /*---------------------------------------------------------------------------*/
 PROCESS(udp_client_process, "UDP client process");
@@ -97,16 +97,9 @@ send_packet(void *ptr)
   static int seq_id;
   char buf[MAX_PAYLOAD_LEN];
 
-  if (battery==0){
-    printf("Energy = 0\n");
-    battery_flag = 0;
-  }
-
-  if(battery_flag) {
     printf("Before Data, Aggregated data = %s\n",global_reader);
     seq_id++;
 
-    printf("Battery = %d\n", battery);
     PRINTF("DATA send to %d 'Hello %d'",
            server_ipaddr.u8[sizeof(server_ipaddr.u8) - 1], seq_id);
  
@@ -118,9 +111,9 @@ send_packet(void *ptr)
     uip_udp_packet_sendto(client_conn, buf, strlen(buf),
                         &server_ipaddr, UIP_HTONS(UDP_SERVER_PORT));
 
+    receive_agregation_flag = 0;
     global_reader_length = 0; // reset global_reader
     global_reader[0] = NULL;
-  }
 }
 /*---------------------------------------------------------------------------*/
 static void
@@ -182,7 +175,9 @@ PROCESS_THREAD(udp_client_process, ev, data)
   //static struct etimer packet_check_timer;
   static struct ctimer backoff_timer;
   
-  //static uint32_t timer_flag;
+  long int tx_time;
+  long int Battery = 100000;
+  tx_time=energest_type_time(ENERGEST_TYPE_TRANSMIT);
 #if WITH_COMPOWER
   static int print = 0;
 #endif
@@ -220,7 +215,7 @@ PROCESS_THREAD(udp_client_process, ev, data)
   global_reader_length = 0;
   receive_agregation_flag = 0;
   //timer_flag = 0;
-  while(1) {
+  while(tx_time < Battery) {
     PROCESS_YIELD();
      
     if(ev == tcpip_event) {
@@ -235,7 +230,6 @@ PROCESS_THREAD(udp_client_process, ev, data)
         //etimer_stop(&packet_check_timer);
         ctimer_set(&backoff_timer, SEND_TIME, send_packet, NULL);
         //send_packet(NULL); // no backoff for branch nodes
-        receive_agregation_flag = 0;
       }
     }
 
@@ -264,9 +258,10 @@ PROCESS_THREAD(udp_client_process, ev, data)
 	print = 0;
       }
 #endif
-
-
+  printf("TX time %ld\n", tx_time);
   }
+  printf("No Battery Power\n");
+  exit(0);
   PROCESS_END();
 }
 /*---------------------------------------------------------------------------*/
