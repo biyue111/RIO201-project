@@ -17,3 +17,4 @@ examples/ipv6/rpl-udp/*
 examples/ipv6/rpl-udp/symbols.c
 
 !.gitignore
+!README.md
