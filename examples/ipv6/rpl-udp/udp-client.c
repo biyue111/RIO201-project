@@ -50,7 +50,7 @@
 #include "net/uip-debug.h"
 
 #ifndef PERIOD
-#define PERIOD 1
+#define PERIOD 3
 #endif
 
 #define START_INTERVAL		(15 * CLOCK_SECOND)
